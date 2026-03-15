@@ -1,0 +1,72 @@
+{
+	"name": "PL_Master_Agro_Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Run Bronze",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Ingest_Bronze",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Run Silver",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Run Bronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Process_Silver",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Run Gold",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Run Silver",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Process_Gold",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-03-15T11:33:45Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

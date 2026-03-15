@@ -1,0 +1,64 @@
+{
+	"name": "DF_Gold_Aggregation",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "LS_ADLS_Agro",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SourceSilver"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_Gold_Summary",
+						"type": "DatasetReference"
+					},
+					"name": "SinkToGold"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AggregateProduction"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          District as string,",
+				"          Crop as string,",
+				"          Season as string,",
+				"          Area as string,",
+				"          Yield as string,",
+				"          Production as string,",
+				"          Soil_Type as string,",
+				"          pH_Level as string,",
+				"          Organic_Matter as string,",
+				"          Nitrogen_Content as string,",
+				"          Phosphorus_Content as string,",
+				"          Potassium_Content as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet',",
+				"     fileSystem: 'silver') ~> SourceSilver",
+				"SourceSilver aggregate(groupBy(District,",
+				"          Crop),",
+				"     Total_Production = sum(toInteger(Production))) ~> AggregateProduction",
+				"AggregateProduction sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['District_Crop_Summary.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> SinkToGold"
+			]
+		}
+	}
+}

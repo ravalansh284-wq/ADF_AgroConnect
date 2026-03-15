@@ -1,0 +1,99 @@
+{
+	"name": "DF_Silver_Processing",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_DF_Bronze_Production",
+						"type": "DatasetReference"
+					},
+					"name": "SourceProduction"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_DF_Bronze_Soil",
+						"type": "DatasetReference"
+					},
+					"name": "SourcSoil"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_Silver_AgroData",
+						"type": "DatasetReference"
+					},
+					"name": "SinkToSilver"
+				}
+			],
+			"transformations": [
+				{
+					"name": "FilterNullProduction"
+				},
+				{
+					"name": "JoinProductionAndSoil"
+				},
+				{
+					"name": "CleanColumns"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          District as string,",
+				"          Crop as string,",
+				"          Season as string,",
+				"          {Area (hectares)} as string,",
+				"          {Yield (quintals)} as string,",
+				"          {Production (metric tons)} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> SourceProduction",
+				"source(output(",
+				"          District as string,",
+				"          {Soil Type} as string,",
+				"          {pH Level} as string,",
+				"          {Organic Matter (%)} as string,",
+				"          {Nitrogen Content (kg/ha)} as string,",
+				"          {Phosphorus Content (kg/ha)} as string,",
+				"          {Potassium Content (kg/ha)} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> SourcSoil",
+				"SourceProduction filter(!isNull({Production (metric tons)})) ~> FilterNullProduction",
+				"FilterNullProduction, SourcSoil join(SourceProduction@District == SourcSoil@District,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinProductionAndSoil",
+				"JoinProductionAndSoil select(mapColumn(",
+				"          District = SourceProduction@District,",
+				"          Crop,",
+				"          Season,",
+				"          Area = {Area (hectares)},",
+				"          Yield = {Yield (quintals)},",
+				"          Production = {Production (metric tons)},",
+				"          Soil_Type = {Soil Type},",
+				"          pH_Level = {pH Level},",
+				"          Organic_Matter = {Organic Matter (%)},",
+				"          Nitrogen_Content = {Nitrogen Content (kg/ha)},",
+				"          Phosphorus_Content = {Phosphorus Content (kg/ha)},",
+				"          Potassium_Content = {Potassium Content (kg/ha)}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> CleanColumns",
+				"CleanColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SinkToSilver"
+			]
+		}
+	}
+}

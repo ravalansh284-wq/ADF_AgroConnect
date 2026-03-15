@@ -1,0 +1,9 @@
+{
+	"name": "adf-harmony-agro-2026",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "b0f44642-7cbd-4c11-8e8e-4e94e413589f",
+		"tenantId": "530b9a19-ba18-4fed-9d19-511e5a9664a6"
+	}
+}
